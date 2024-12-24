@@ -40,7 +40,7 @@ Import `createRouter` from `express-route-tracker` and use it to define your rou
 import { RouteDisplay } from '@node_modules/express-route-tracker/dist';
 
 app.use("/", router);
-const routeDisplay = new RouteDisplay(this.app);  // <-- This is the key line
+const routeDisplay = new RouteDisplay(app);  // <-- This is the key line
 routeDisplay.displayRoutes();  // <-- This is the key line
 ```
 
