@@ -1,0 +1,32 @@
+{
+    "name": "express-route-tracker",
+    "version": "2.0.28",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "clean": "rimraf dist",
+        "build": "tsc",
+        "bump": "npm version patch --no-git-tag-version",
+        "prepublishOnly": "npm run clean && npm run build",
+        "release": "npm run bump && npm publish"
+    },
+    "dependencies": {
+        "cli-table3": "^0.6.5",
+        "colorette": "^2.0.20",
+        "express": "^4.21.2"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.0",
+        "rimraf": "^6.0.1"
+    }
+}
