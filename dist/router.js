@@ -27,7 +27,21 @@ function createRouter(filename) {
             });
             // Add routeLoggerMiddleware before handlers
             const route = originalMethod.call(this, path, middleware_1.routeLoggerMiddleware, ...handlers);
-            route.__source = filename;
+            // Ensure source is set on the route itself
+            if (route && typeof route === 'object') {
+                route.__source = filename;
+                // Also set source on the route's stack
+                if (route.stack && Array.isArray(route.stack)) {
+                    route.stack.forEach((layer) => {
+                        if (layer && typeof layer === 'object') {
+                            layer.__source = filename;
+                            if (layer.handle && typeof layer.handle === 'function') {
+                                layer.handle.__source = filename;
+                            }
+                        }
+                    });
+                }
+            }
             return route;
         };
     });
