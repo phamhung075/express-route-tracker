@@ -233,7 +233,7 @@ This project is licensed under the **MIT License**.
 
 ## 📷 **Example Screenshot**
 
-![Example Usage](https://scontent.fctt1-1.fna.fbcdn.net/v/t1.15752-9/467180401_8763723233676664_3702955183771849645_n.png?_nc_cat=102&ccb=1-7&_nc_sid=9f807c&_nc_ohc=OYgL8sgr8YsQ7kNvgGKVb__&_nc_zt=23&_nc_ht=scontent.fctt1-1.fna&oh=03_Q7cD1gF_tvMcfrEkJqZjf_OdZN4lVqRx42obp83WH8vt8gq4cA&oe=67918186)
+![Example Usage](https://scontent.fctt1-1.fna.fbcdn.net/v/t1.15752-9/467114773_1049798083500442_9220589951170052487_n.png?_nc_cat=109&ccb=1-7&_nc_sid=9f807c&_nc_ohc=LagamJ5YO6EQ7kNvgH1emSC&_nc_zt=23&_nc_ht=scontent.fctt1-1.fna&oh=03_Q7cD1gFU3TRmRpEfgInCnhodelyaslhhCB0O5245mzhQYKnuWg&oe=67918C78)
 
 ---
 
