@@ -37,9 +37,11 @@ Import `createRouter` from `express-route-tracker` and use it to define your rou
 
 ```typescript
 //src\_core\server\app\app.service.ts
+import { RouteDisplay } from '@node_modules/express-route-tracker/dist';
+
 app.use("/", router);
-const routeDisplay = new RouteDisplay(this.app);
-routeDisplay.displayRoutes();
+const routeDisplay = new RouteDisplay(this.app);  // <-- This is the key line
+routeDisplay.displayRoutes();  // <-- This is the key line
 ```
 
 ```typescript
@@ -50,7 +52,7 @@ import { Router } from 'express';
 const router = Router();
 
 
-router.use('/api/contact', require('./contact'));
+router.use('/api/contact', require('./contact'));  // <-- This is the key line
 
 router.post('/', (_req: Request, res: Response, _next: NextFunction) => {
 	return res.status(200).json({
@@ -72,10 +74,10 @@ import {
   UpdateContactSchema
 } from './contact.validation';
 import { validateSchema } from '@/_core/middleware/validateSchema.middleware';
-import { createRouter } from '@/_core/helper/create-router-path';
+import { createRouter } from '@node_modules/express-route-tracker/dist';
 
 // Create router with source tracking
-const router = createRouter(__filename);
+const router = createRouter(__filename);  // <-- This is the key line
 
 // Named Handlers
 async function createContactHandler(req: any, res: any, next: any) {
@@ -232,7 +234,7 @@ This project is licensed under the **MIT License**.
 
 ## 📷 **Example Screenshot**
 
-![Example Usage](example.png)
+![Example Usage](https://scontent.fctt1-1.fna.fbcdn.net/v/t1.15752-9/467180401_8763723233676664_3702955183771849645_n.png?_nc_cat=102&ccb=1-7&_nc_sid=9f807c&_nc_ohc=OYgL8sgr8YsQ7kNvgGKVb__&_nc_zt=23&_nc_ht=scontent.fctt1-1.fna&oh=03_Q7cD1gF_tvMcfrEkJqZjf_OdZN4lVqRx42obp83WH8vt8gq4cA&oe=67918186)
 
 ---
 
