@@ -7,7 +7,7 @@ import { RouteHandlerWithMetadata } from './types';
  * @param filename - The source file name for the router.
  * @returns Express Router
  */
-export function createRouter(filename: string): Router {
+export function createRouter(filename: string, dirname: string): Router {
     const router = express.Router();
 
     // Store the source on the router itself
@@ -26,7 +26,23 @@ export function createRouter(filename: string): Router {
 
             // Add routeLoggerMiddleware before handlers
             const route = originalMethod.call(this, path, routeLoggerMiddleware, ...handlers);
-            (route as any).__source = filename;
+            
+            // Ensure source is set on the route itself
+            if (route && typeof route === 'object') {
+                (route as any).__source = filename;
+                // Also set source on the route's stack
+                if (route.stack && Array.isArray(route.stack)) {
+                    route.stack.forEach(layer => {
+                        if (layer && typeof layer === 'object') {
+                            (layer as any).__source = filename;
+                            if (layer.handle && typeof layer.handle === 'function') {
+                                (layer.handle as any).__source = filename;
+                            }
+                        }
+                    });
+                }
+            }
+            
             return route;
         };
     });
