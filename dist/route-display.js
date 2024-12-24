@@ -32,8 +32,7 @@ class RouteDisplay {
     }
     parseRoutes(layer, basePath = '') {
         var _a, _b, _c, _d, _e;
-        console.log('Parsing routes...');
-        console.log('Layer:', layer);
+        // console.log('Parsing routes...');
         if (layer.route) {
             // This is a route definition
             const route = layer.route;

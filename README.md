@@ -162,7 +162,6 @@ const router = createRouter(__filename);
 
 // Custom Middleware
 function customLogger(req: Request, res: Response, next: NextFunction) {
-    console.log('Custom Middleware Triggered!');
     next();
 }
 
