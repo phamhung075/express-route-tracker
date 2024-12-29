@@ -1,48 +1,34 @@
-# 📚 **Express Route Tracker**
+# 📚 **Express Route Tracker with HATEOAS**
 
-**Express Route Tracker** is a lightweight library designed to add metadata and logging capabilities to your Express.js routes. It enhances route handlers with information about their source file and route name, making debugging, tracing, and logging much easier.
-
----
-
-## 🚀 **Features**
-
-- ✅ **Automatic Route Metadata:** Adds `__source` and `__name` properties to handlers.  
-- ✅ **Logging Middleware:** Logs route method, path, and handler source for better traceability.  
-- ✅ **Seamless Integration:** Easily wraps around Express routes without modifying existing logic.  
-- ✅ **Supports All HTTP Methods:** `GET`, `POST`, `PUT`, `DELETE`, `PATCH`.  
+**Express Route Tracker** A lightweight library for Express.js that adds route tracking and HATEOAS (Hypermedia as the Engine of Application State) capabilities to your API.
 
 ---
 
-## 📦 **Installation**
+## Quick Start
 
-Using npm:
+### 1. Installation
 
 ```bash
 npm install express-route-tracker
-```
-
-Using yarn:
-
-```bash
+# or
 yarn add express-route-tracker
 ```
 
----
-
-## 🛠️ **Usage**
-
-### **1. Create a Router with `createRouter`**
-
-Import `createRouter` from `express-route-tracker` and use it to define your routes.
+### 2. Basic Setup
 
 ```typescript
-//src\_core\server\app\app.service.ts
-import { RouteDisplay } from '@node_modules/express-route-tracker/dist';
+// src/app.ts
+import { RouteDisplay } from 'express-route-tracker';
+import express from 'express';
 
+const app = express();
 app.use("/", router);
-const routeDisplay = new RouteDisplay(app);  // <-- This is the key line
-routeDisplay.displayRoutes();  // <-- This is the key line
+
+// Display all routes in console when starting the app
+const routeDisplay = new RouteDisplay(app);
+routeDisplay.displayRoutes();
 ```
+
 
 ```typescript
 //src\modules\index.ts
@@ -52,11 +38,12 @@ import { Router } from 'express';
 const router = Router();
 
 
-router.use('/api/contact', require('./contact'));  // <-- This is the key line
+router.use('/api/contact', require('./contact'));
 
+// router.use('/v1/api/error', require('./error'));
 router.post('/', (_req: Request, res: Response, _next: NextFunction) => {
 	return res.status(200).json({
-		message: 'Welcome to AIAnalyst!'
+		message: 'Welcome !'
 	})
 });
 
@@ -64,132 +51,133 @@ router.post('/', (_req: Request, res: Response, _next: NextFunction) => {
 export default router;
 ```
 
+### 3. Creating Routes with HATEOAS
+In your route module (e.g., `src/modules/contact/index.ts`):
+
 ```typescript
-// src\modules\contact\index.ts
-import { asyncHandlerFn } from '@/_core/helper/async-handler/async-handler';
-import contactController from './contact.controller.factory';
+// src/modules/contact/index.ts
+import { createHATEOASMiddleware, createRouter } from '@node_modules/express-route-tracker/dist';
 import {
-  ContactIdSchema,
-  CreateContactSchema,
-  UpdateContactSchema
-} from './contact.validation';
-import { validateSchema } from '@/_core/middleware/validateSchema.middleware';
-import { createRouter } from '@node_modules/express-route-tracker/dist';
+  createContactHandler,
+  deleteContactHandler,
+  getAllContactsHandler,
+  getContactByIdHandler,
+  updateContactHandler
+} from './contact.handler';
+import { asyncHandler } from '@/_core/helper/asyncHandler';
+import { config } from '@/_core/config/dotenv.config';
 
 // Create router with source tracking
-const router = createRouter(__filename);  // <-- This is the key line
+const router = createRouter(__filename);
 
-// Named Handlers
-async function createContactHandler(req: any, res: any, next: any) {
-  await contactController.createContact(req, res, next);
-}
-
-async function getAllContactsHandler(req: any, res: any, next: any) {
-  await contactController.getAllContacts(req, res, next);
-}
-
-async function getContactByIdHandler(req: any, res: any, next: any) {
-  await contactController.getContactById(req, res, next);
-}
-
-async function updateContactHandler(req: any, res: any, next: any) {
-  await contactController.updateContact(req, res, next);
-}
-
-async function deleteContactHandler(req: any, res: any, next: any) {
-  await contactController.deleteContact(req, res, next);
-}
+router.use(createHATEOASMiddleware(router, {
+  autoIncludeSameRoute: true,
+  baseUrl: config.baseUrl,
+  includePagination: true,
+  customLinks: {
+      documentation: (_req) => ({
+          rel: 'documentation',
+          href: config.baseUrl+'/docs',
+          method: 'GET',
+          'title': 'API Documentation'
+      })
+  }
+}));
 
 // Define routes without baseApi prefix
-router.post('/', validateSchema(CreateContactSchema), asyncHandlerFn(createContactHandler));
-router.get('/', asyncHandlerFn(getAllContactsHandler));
-router.get('/:id', validateSchema(ContactIdSchema), asyncHandlerFn(getContactByIdHandler));
-router.put('/:id', validateSchema(UpdateContactSchema), asyncHandlerFn(updateContactHandler));
-router.delete('/:id', validateSchema(ContactIdSchema), asyncHandlerFn(deleteContactHandler));
+router.post('/', asyncHandler(createContactHandler));
+router.get('/', asyncHandler(getAllContactsHandler));
+router.get('/:id', asyncHandler(getContactByIdHandler));
+router.put('/:id', asyncHandler(updateContactHandler));
+router.delete('/:id', asyncHandler(deleteContactHandler));
 
 export = router;
 ```
 
 ---
 
-### **2. Middleware Logging**
+## Response Format
 
-The library automatically applies a **logging middleware** that logs the route method, path, and source file.
+Your API responses will now automatically include HATEOAS links:
 
-**Example Output in Console:**
-```
-[Route Log]: GET / - Source: src/routes/example.route.ts
-[Route Log]: POST /data - Source: src/routes/example.route.ts
-[Route Log]: GET /user/:id - Source: src/routes/example.route.ts
-```
-
----
-
-### **3. Access Route Metadata**
-
-Each route handler now has metadata available:
-
-```typescript
-router.get('/meta', (req: Request, res: Response) => {
-    res.json({
-        handlerSource: (req.route?.stack || [])
-            .map(layer => (layer.handle as any).__source || 'unknown')
-    });
-});
-```
-
-**Output:**
 ```json
 {
-    "handlerSource": "src/routes/example.route.ts"
+    "id": "yQg9OD4KRTNywa2fHwxN",
+    "name": "John Doe",
+    "links": {
+        "self": {
+            "rel": "self",
+            "href": "localhost:3333/api/contact/yQg9OD4KRTNywa2fHwxN",
+            "method": "GET"
+        },
+        "create": {
+            "title": "POST /",
+            "rel": "create",
+            "href": "localhost:3333/api/contact/",
+            "method": "POST"
+        },
+        "collection": {
+            "title": "GET /",
+            "rel": "collection",
+            "href": "localhost:3333/api/contact/",
+            "method": "GET"
+        },
+        "item": {
+            "title": "GET /:id",
+            "rel": "item",
+            "href": "localhost:3333/api/contact/yQg9OD4KRTNywa2fHwxN",
+            "method": "GET"
+        },
+        "update": {
+            "title": "PUT /:id",
+            "rel": "update",
+            "href": "localhost:3333/api/contact/yQg9OD4KRTNywa2fHwxN",
+            "method": "PUT"
+        },
+        "delete": {
+            "title": "DELETE /:id",
+            "rel": "delete",
+            "href": "localhost:3333/api/contact/yQg9OD4KRTNywa2fHwxN",
+            "method": "DELETE"
+        },
+        "documentation": {
+            "rel": "documentation",
+            "href": "localhost:3333/docs",
+            "method": "GET",
+            "title": "API Documentation"
+        }
+    }
 }
 ```
 
----
+## Configuration Options
 
-## 🔧 **Advanced Configuration**
+The `createHATEOASMiddleware` accepts several options:
 
-### **Custom Middleware**
+1. `autoIncludeSameRoute`: When true, includes all routes from the same file in the links
+2. `baseUrl`: The base URL for generating absolute URLs
+3. `includePagination`: Adds pagination links when response includes pagination data
+4. `customLinks`: Custom link generators for additional relationships
 
-You can still add your custom middlewares before the handler:
+## Pagination Support
+
+When `includePagination` is enabled and your response includes pagination data:
 
 ```typescript
-// src\modules\contact\index.ts
-import { createRouter } from 'express-route-tracker';
-import { Request, Response, NextFunction } from 'express';
-
-const router = createRouter(__filename);
-
-// Custom Middleware
-function customLogger(req: Request, res: Response, next: NextFunction) {
-    next();
+{
+    data: items,
+    pagination: {
+        currentPage: 1,
+        totalPages: 5
+    },
+    links: {
+        // Regular links...
+        first: { rel: 'first', href: '/api/contacts?page=1', method: 'GET' },
+        next: { rel: 'next', href: '/api/contacts?page=2', method: 'GET' },
+        last: { rel: 'last', href: '/api/contacts?page=5', method: 'GET' }
+    }
 }
-
-// Route with Custom Middleware
-router.get('/custom', customLogger, (req: Request, res: Response) => {
-    res.send('Custom route with middleware');
-});
 ```
-
-**Console Output:**
-```
-Custom Middleware Triggered!
-[Route Log]: GET /custom - Source: src/routes/example.route.ts
-```
-
----
-
-## 🧪 **Testing**
-
-To verify the functionality:
-1. Start your Express server.
-2. Access routes like:
-   - `http://localhost:3000/`
-   - `http://localhost:3000/data`
-   - `http://localhost:3000/user/123`
-3. Check your terminal logs for metadata and route logs.
-
----
 
 ## 📄 **API Reference**
 
@@ -198,8 +186,6 @@ To verify the functionality:
 - **Parameters:**  
    - `filename` *(string)*: The source file name (use `__filename`).
 - **Returns:** `express.Router`
-
-### **Route Handler Metadata**
 Each route handler will have:
 - `__source`: Path of the source file.
 - `__name`: HTTP method and path.
@@ -207,13 +193,52 @@ Each route handler will have:
 ### **Middleware: `routeLoggerMiddleware`**
 - Logs method, path, and source file.
 
+### **Middleware: `createHATEOASMiddleware`**
+- Automatically generates HATEOAS links for your API.
+
+
+
 ---
 
 ## 🛡️ **Best Practices**
 
+1. **Consistent Base URLs**: Use configuration to maintain consistent base URLs across environments.
+
+```typescript
+// config.ts
+export const config = {
+    baseUrl: process.env.API_BASE_URL || 'http://localhost:3333',
+    baseApi: '/api'
+};
+```
+
+2. **Meaningful Relationships**: Use semantic rel values that describe the relationship:
+   - `self`: Current resource
+   - `collection`: List endpoint
+   - `create`: Creation endpoint
+   - `update`: Update endpoint
+   - `delete`: Delete endpoint
+
+3. **Error Handling**: Ensure your error responses also include appropriate HATEOAS links:
+
+```typescript
+function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+    res.status(500).json({
+        error: err.message,
+        links: {
+            self: {
+                rel: 'self',
+                href: `${config.baseUrl}${req.originalUrl}`,
+                method: req.method as any
+            }
+        }
+    });
+}
+```
+
 - Use `createRouter(__filename)` for all route files.  
 - Avoid directly manipulating `__source` and `__name` properties.  
-- Leverage the middleware for debugging and monitoring.
+- Use `createHATEOASMiddleware` to automatically generate HATEOAS links for your API.
 
 ---
 
@@ -234,6 +259,9 @@ This project is licensed under the **MIT License**.
 ## 📷 **Example Screenshot**
 
 ![Example Usage](https://scontent.fctt1-1.fna.fbcdn.net/v/t1.15752-9/467114773_1049798083500442_9220589951170052487_n.png?_nc_cat=109&ccb=1-7&_nc_sid=9f807c&_nc_ohc=LagamJ5YO6EQ7kNvgH1emSC&_nc_zt=23&_nc_ht=scontent.fctt1-1.fna&oh=03_Q7cD1gFU3TRmRpEfgInCnhodelyaslhhCB0O5245mzhQYKnuWg&oe=67918C78)
+
+## **Example Project**
+`https://github.com/phamhung075/AIanalist`
 
 ---
 
