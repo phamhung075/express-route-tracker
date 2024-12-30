@@ -1,0 +1,823 @@
+Repository: express-route-tracker
+Files analyzed: 11
+
+Estimated tokens: 5.4k
+
+Directory structure:
+└── express-route-tracker/
+    ├── .npmignore
+    ├── README.md
+    ├── image/
+    ├── package.json
+    ├── src/
+    │   ├── creates-HATEOAS.middleware.ts
+    │   ├── hateoas.interface.ts
+    │   ├── index.ts
+    │   ├── middleware.ts
+    │   ├── route-display.ts
+    │   ├── router.ts
+    │   └── types.ts
+    └── tsconfig.json
+
+
+================================================
+File: \.npmignore
+================================================
+node_modules
+src/
+*.ts
+*.log
+.env
+*.config.js
+tests/
+*.tg
+
+================================================
+File: \README.md
+================================================
+# 📚 **Express Route Tracker with HATEOAS**
+
+**Express Route Tracker** A lightweight library for Express.js that adds route tracking and HATEOAS (Hypermedia as the Engine of Application State) capabilities to your API.
+
+---
+
+## Quick Start
+
+### 1. Installation
+
+```bash
+npm install express-route-tracker
+# or
+yarn add express-route-tracker
+```
+
+### 2. Basic Setup
+
+```typescript
+// src/app.ts
+import { RouteDisplay } from 'express-route-tracker';
+import express from 'express';
+
+const app = express();
+app.use("/", router);
+
+// Display all routes in console when starting the app
+const routeDisplay = new RouteDisplay(app);
+routeDisplay.displayRoutes();
+```
+
+
+```typescript
+//src\modules\index.ts
+import { Request, Response, NextFunction } from 'express';
+import { Router } from 'express';
+
+const router = Router();
+
+
+router.use('/api/contact', require('./contact'));
+
+// router.use('/v1/api/error', require('./error'));
+router.post('/', (_req: Request, res: Response, _next: NextFunction) => {
+	return res.status(200).json({
+		message: 'Welcome !'
+	})
+});
+
+
+export default router;
+```
+
+### 3. Creating Routes with HATEOAS
+In your route module (e.g., `src/modules/contact/index.ts`):
+
+```typescript
+// src/modules/contact/index.ts
+import { createHATEOASMiddleware, createRouter } from '@node_modules/express-route-tracker/dist';
+import {
+  createContactHandler,
+  deleteContactHandler,
+  getAllContactsHandler,
+  getContactByIdHandler,
+  updateContactHandler
+} from './contact.handler';
+import { asyncHandler } from '@/_core/helper/asyncHandler';
+import { config } from '@/_core/config/dotenv.config';
+
+// Create router with source tracking
+const router = createRouter(__filename);
+
+router.use(createHATEOASMiddleware(router, {
+  autoIncludeSameRoute: true,
+  baseUrl: config.baseUrl,
+  includePagination: true,
+  customLinks: {
+      documentation: (_req) => ({
+          rel: 'documentation',
+          href: config.baseUrl+'/docs',
+          method: 'GET',
+          'title': 'API Documentation'
+      })
+  }
+}));
+
+// Define routes without baseApi prefix
+router.post('/', asyncHandler(createContactHandler));
+router.get('/', asyncHandler(getAllContactsHandler));
+router.get('/:id', asyncHandler(getContactByIdHandler));
+router.put('/:id', asyncHandler(updateContactHandler));
+router.delete('/:id', asyncHandler(deleteContactHandler));
+
+export = router;
+```
+
+---
+
+## Response Format
+
+Your API responses will now automatically include HATEOAS links:
+
+```json
+{
+    "id": "yQg9OD4KRTNywa2fHwxN",
+    "name": "John Doe",
+    "links": {
+        "self": {
+            "rel": "self",
+            "href": "localhost:3333/api/contact/yQg9OD4KRTNywa2fHwxN",
+            "method": "GET"
+        },
+        "create": {
+            "title": "POST /",
+            "rel": "create",
+            "href": "localhost:3333/api/contact/",
+            "method": "POST"
+        },
+        "collection": {
+            "title": "GET /",
+            "rel": "collection",
+            "href": "localhost:3333/api/contact/",
+            "method": "GET"
+        },
+        "item": {
+            "title": "GET /:id",
+            "rel": "item",
+            "href": "localhost:3333/api/contact/yQg9OD4KRTNywa2fHwxN",
+            "method": "GET"
+        },
+        "update": {
+            "title": "PUT /:id",
+            "rel": "update",
+            "href": "localhost:3333/api/contact/yQg9OD4KRTNywa2fHwxN",
+            "method": "PUT"
+        },
+        "delete": {
+            "title": "DELETE /:id",
+            "rel": "delete",
+            "href": "localhost:3333/api/contact/yQg9OD4KRTNywa2fHwxN",
+            "method": "DELETE"
+        },
+        "documentation": {
+            "rel": "documentation",
+            "href": "localhost:3333/docs",
+            "method": "GET",
+            "title": "API Documentation"
+        }
+    }
+}
+```
+
+## Configuration Options
+
+The `createHATEOASMiddleware` accepts several options:
+
+1. `autoIncludeSameRoute`: When true, includes all routes from the same file in the links
+2. `baseUrl`: The base URL for generating absolute URLs
+3. `includePagination`: Adds pagination links when response includes pagination data
+4. `customLinks`: Custom link generators for additional relationships
+
+## Pagination Support
+
+When `includePagination` is enabled and your response includes pagination data:
+
+```typescript
+{
+    data: items,
+    pagination: {
+        currentPage: 1,
+        totalPages: 5
+    },
+    links: {
+        // Regular links...
+        first: { rel: 'first', href: '/api/contacts?page=1', method: 'GET' },
+        next: { rel: 'next', href: '/api/contacts?page=2', method: 'GET' },
+        last: { rel: 'last', href: '/api/contacts?page=5', method: 'GET' }
+    }
+}
+```
+
+## 📄 **API Reference**
+
+### **`createRouter(filename: string)`**
+- **Description:** Creates a router instance with metadata tracking and route logging.
+- **Parameters:**  
+   - `filename` *(string)*: The source file name (use `__filename`).
+- **Returns:** `express.Router`
+Each route handler will have:
+- `__source`: Path of the source file.
+- `__name`: HTTP method and path.
+
+### **Middleware: `routeLoggerMiddleware`**
+- Logs method, path, and source file.
+
+### **Middleware: `createHATEOASMiddleware`**
+- Automatically generates HATEOAS links for your API.
+
+
+
+---
+
+## 🛡️ **Best Practices**
+
+1. **Consistent Base URLs**: Use configuration to maintain consistent base URLs across environments.
+
+```typescript
+// config.ts
+export const config = {
+    baseUrl: process.env.API_BASE_URL || 'http://localhost:3333',
+    baseApi: '/api'
+};
+```
+
+2. **Meaningful Relationships**: Use semantic rel values that describe the relationship:
+   - `self`: Current resource
+   - `collection`: List endpoint
+   - `create`: Creation endpoint
+   - `update`: Update endpoint
+   - `delete`: Delete endpoint
+
+3. **Error Handling**: Ensure your error responses also include appropriate HATEOAS links:
+
+```typescript
+function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+    res.status(500).json({
+        error: err.message,
+        links: {
+            self: {
+                rel: 'self',
+                href: `${config.baseUrl}${req.originalUrl}`,
+                method: req.method as any
+            }
+        }
+    });
+}
+```
+
+- Use `createRouter(__filename)` for all route files.  
+- Avoid directly manipulating `__source` and `__name` properties.  
+- Use `createHATEOASMiddleware` to automatically generate HATEOAS links for your API.
+
+---
+
+## 🌟 **Contributing**
+
+We welcome contributions! If you encounter bugs, have feature requests, or want to improve the library:
+- Open an issue on GitHub.  
+- Submit a pull request.
+
+---
+
+## 📃 **License**
+
+This project is licensed under the **MIT License**.
+
+---
+
+## 📷 **Example Screenshot**
+
+![Example Usage](https://scontent.fctt1-1.fna.fbcdn.net/v/t1.15752-9/467114773_1049798083500442_9220589951170052487_n.png?_nc_cat=109&ccb=1-7&_nc_sid=9f807c&_nc_ohc=LagamJ5YO6EQ7kNvgH1emSC&_nc_zt=23&_nc_ht=scontent.fctt1-1.fna&oh=03_Q7cD1gFU3TRmRpEfgInCnhodelyaslhhCB0O5245mzhQYKnuWg&oe=67918C78)
+
+## **Example Project**
+`https://github.com/phamhung075/AIanalist`
+
+---
+
+## 📞 **Support**
+
+For help or inquiries:
+- 📧 **Email:** daihung.pham@gmail.com  
+- 🌐 **Git:** [https://github.com/phamhung075](https://github.com/phamhung075)  
+
+Happy Coding! 🚀✨
+
+
+
+================================================
+File: \package.json
+================================================
+{
+    "name": "express-route-tracker",
+    "version": "2.0.61",
+    "main": "dist/index.js",
+    "license": "MIT",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "files": [
+        "dist",
+        "README.md"
+    ],
+    "scripts": {
+        "clean": "rimraf dist",
+        "build": "tsc",
+        "bump": "npm version patch --no-git-tag-version",
+        "prepublishOnly": "npm run clean && npm run build",
+        "release": "npm run bump && npm publish"
+    },
+    "dependencies": {
+        "cli-table3": "^0.6.5",
+        "colorette": "^2.0.20",
+        "express": "^4.21.2"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.0",
+        "rimraf": "^6.0.1"
+    }
+}
+
+
+================================================
+File: \src\creates-HATEOAS.middleware.ts
+================================================
+import { Request, Response, NextFunction, Router } from 'express';
+import { HATEOASOptions, HATEOASLinks } from './hateoas.interface';
+
+
+export function createHATEOASMiddleware(router: Router, options: HATEOASOptions = { autoIncludeSameRoute: false }) {
+    return function hateoasMiddleware(req: Request, res: Response, next: NextFunction) {
+        const originalJson = res.json;
+        const baseUrl = options.baseUrl || '';
+        
+        // Get the source file from the router
+        const sourceFile = (router as any).__source;
+        console.log('Router source:', sourceFile);
+        
+        if (!sourceFile) {
+            console.warn('No source file found on router');
+            next();
+            return;
+        }
+        
+        // Log the router structure for debugging
+        // console.log('Router stack size:', (router as any).stack.length);
+        // console.log('Router prototype chain:', Object.getPrototypeOf(router));
+
+        // Collect all routes from the same source file
+        const routes = collectRoutesFromSameSource(router, sourceFile);
+
+        res.json = function(body: any) {
+            if (body && typeof body === 'object') {
+                const links: HATEOASLinks = {
+                    self: {
+                        rel: 'self',
+                        href: `${baseUrl}${req.originalUrl}`,
+                        method: req.method as any
+                    }
+                };
+
+                // Add pagination links if enabled and pagination data exists
+                if (options.includePagination && body.pagination) {
+                    const { currentPage, totalPages } = body.pagination;
+                    const baseLink = `${baseUrl}${req.path}`;
+
+                    if (totalPages > 1) {
+                        links.first = {
+                            rel: 'first',
+                            href: `${baseLink}?page=1`,
+                            method: 'GET'
+                        };
+
+                        if (currentPage > 1) {
+                            links.prev = {
+                                rel: 'prev',
+                                href: `${baseLink}?page=${currentPage - 1}`,
+                                method: 'GET'
+                            };
+                        }
+
+                        if (currentPage < totalPages) {
+                            links.next = {
+                                rel: 'next',
+                                href: `${baseLink}?page=${currentPage + 1}`,
+                                method: 'GET'
+                            };
+                        }
+
+                        links.last = {
+                            rel: 'last',
+                            href: `${baseLink}?page=${totalPages}`,
+                            method: 'GET'
+                        };
+                    }
+                }
+
+                // Add related route links from the same file
+                if (options.autoIncludeSameRoute !== false) {
+                    // Extract base path from the current request
+                    const basePath = req.baseUrl || '';
+                    // console.log('Base path:', basePath);
+                    
+                    routes.forEach(route => {
+                        // Generate the actual route path with parameters
+                        const routePath = route.path.replace(/:[^/]+/g, (match) => {
+                            const param = match.substring(1);
+                            return req.params[param] || body[param] || match;
+                        });
+
+                        // Normalize paths for comparison
+                        const normalizedCurrentPath = req.route ? normalizeRoutePath(req.route.path) : '';
+                        const normalizedRoutePath = normalizeRoutePath(route.path);
+                        
+                        // Determine if this is the current route
+                        const isCurrentRoute = (
+                            route.method.toUpperCase() === req.method &&
+                            normalizedCurrentPath === normalizedRoutePath
+                        );
+
+                        // Include the route if autoIncludeSameRoute is true or it's not the current route
+                        if (options.autoIncludeSameRoute === true || !isCurrentRoute) {
+                            const linkName = generateRelationship(route.method, route.path);
+                            links[linkName] = {
+                                title: `${route.method.toUpperCase()} ${route.path}`,
+                                rel: linkName,
+                                href: `${baseUrl}${basePath}${routePath}`,
+                                method: route.method.toUpperCase() as any,
+                            };
+                        }
+                    });
+                }
+
+                // Add custom links if defined
+                if (options.customLinks) {
+                    Object.entries(options.customLinks).forEach(([key, generator]) => {
+                        const customLink = generator(req as any);
+                        if (customLink) {
+                            links[key] = customLink;
+                        }
+                    });
+                }
+
+                // Add links to the response
+                body.links = links;
+            }
+
+            return originalJson.call(this, body);
+        };
+
+        next();
+    };
+}
+
+/**
+ * Collects all routes from the same source file
+ */
+function collectRoutesFromSameSource(router: Router, sourceFile: string) {
+    const routes: Array<{ method: string; path: string }> = [];
+    const stack = (router as any).stack;
+
+    // console.log('Source file:', sourceFile);
+    // console.log('Stack length:', stack.length);
+
+    stack.forEach((layer: any) => {
+        // If this layer has a route, include it (since we're already working with the correct router)
+        if (layer.route) {
+            const routePath = layer.route.path;
+            const routeMethods = layer.route.methods;
+
+            console.log('Found route:', {
+                path: routePath,
+                methods: routeMethods
+            });
+
+            Object.keys(routeMethods).forEach(method => {
+                routes.push({
+                    method: method,
+                    path: routePath
+                });
+            });
+        }
+    });
+
+    console.log('Collected routes:', routes);
+    return routes;
+}
+
+/**
+ * Normalizes a route path for comparison by:
+ * 1. Removing trailing slashes
+ * 2. Replacing parameter names with placeholder
+ * @param path The route path to normalize
+ */
+function normalizeRoutePath(path: string): string {
+    return path
+        .replace(/\/$/, '') // Remove trailing slash
+        .replace(/:[^/]+/g, ':param') // Replace all parameters with a standard placeholder
+        .replace(/^\//, ''); // Remove leading slash
+}
+
+/**
+ * Generates a meaningful relationship name for a link based on the HTTP method and path
+ */
+function generateRelationship(method: string, path: string): string {
+    // Common RESTful relationships
+    if (path === '/' || path === '') {
+        switch (method.toLowerCase()) {
+            case 'get': return 'collection';
+            case 'post': return 'create';
+            default: return method.toLowerCase();
+        }
+    }
+
+    if (path.includes(':id')) {
+        switch (method.toLowerCase()) {
+            case 'get': return 'item';
+            case 'put': return 'update';
+            case 'delete': return 'delete';
+            case 'patch': return 'partial-update';
+            default: return method.toLowerCase();
+        }
+    }
+
+    // For any other paths, create a semantic relationship
+    const cleanPath = path.replace(/^\/|\/$/g, '')  // Remove leading/trailing slashes
+                         .replace(/:/g, '')          // Remove colon from parameters
+                         .replace(/\//g, '-');       // Replace slashes with dashes
+    
+    return `${method.toLowerCase()}-${cleanPath}`;
+}
+
+================================================
+File: \src\hateoas.interface.ts
+================================================
+
+/** Represents an individual HATEOAS link */
+export interface HATEOASLink {
+    /** Optional title for the link */
+    title?: string;
+    /** The relationship of the link to the current resource */
+    rel: string;
+    /** The target URI of the link */
+    href: string;
+    /** The HTTP method used for the link */
+    method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+
+}
+
+/** Represents a collection of HATEOAS links */
+export interface HATEOASLinks {
+    /** A self-referencing link to the current resource */
+    self: HATEOASLink;
+    /** Link to the first page of a paginated resource */
+    first?: HATEOASLink;
+    /** Link to the previous page of a paginated resource */
+    prev?: HATEOASLink;
+    /** Link to the next page of a paginated resource */
+    next?: HATEOASLink;
+    /** Link to the last page of a paginated resource */
+    last?: HATEOASLink;
+    /** Additional custom links (e.g., deposits, withdrawals, etc.) */
+    [key: string]: HATEOASLink | undefined;
+}
+
+/**
+ * Configuration options for HATEOAS middleware
+ */
+export interface HATEOASOptions {
+    /** Whether to automatically include all routes from the same file */
+    autoIncludeSameRoute: boolean;
+    /** Base URL for generating links */
+    baseUrl?: string;
+    /** Whether to include pagination links */
+    includePagination?: boolean;
+    /** Custom link generators */
+    customLinks?: {
+        [key: string]: (req: Request) => HATEOASLink | undefined;
+    };
+}
+
+
+
+================================================
+File: \src\index.ts
+================================================
+export { RouteDisplay } from './route-display';
+export { createRouter } from './router';
+export { routeLoggerMiddleware } from './middleware';
+export type { RouteHandlerWithMetadata } from './types';
+export {
+    HATEOASLink,
+    HATEOASLinks,
+    HATEOASOptions
+} from './hateoas.interface';
+export { createHATEOASMiddleware } from './creates-HATEOAS.middleware';
+
+================================================
+File: \src\middleware.ts
+================================================
+import { Request, Response, NextFunction } from 'express';
+
+/**
+ * Middleware to log route metadata.
+ */
+export function routeLoggerMiddleware(req: Request, res: Response, next: NextFunction) {
+    const routeName = req.route?.path || 'unknown';
+    const method = req.method;
+    const handlerSource = (req.route?.stack || [])
+        .map((layer: any) => (layer.handle as any).__source || 'unknown')
+        .join(', ');
+
+    console.log(`[Route Log]: ${method} ${routeName} - Source: ${handlerSource}`);
+    next();
+}
+
+
+================================================
+File: \src\route-display.ts
+================================================
+//src\_core\helper\route-display\route-display.index.ts
+
+import Table from 'cli-table3';
+import { blue, cyan, gray, green, magenta, red, white } from 'colorette';
+import express from 'express';
+
+interface RouteInfo {
+    method: string;
+    path: string;
+    sourcePath: string;
+}
+
+export class RouteDisplay {
+    private app: express.Express;
+    private routes: RouteInfo[] = [];
+
+    constructor(app: express.Express) {
+        this.app = app;
+    }
+
+    private formatMethod(method: string): string {
+        const colors: Record<string, (text: string) => string> = {
+            'GET': green,
+            'POST': blue,
+            'PUT': magenta,
+            'DELETE': red,
+            'PATCH': cyan
+        };
+        return colors[method]?.(method.toUpperCase()) || method;
+    }
+
+    private getSourcePath(route: any): string {
+        return route.__source || 
+               route.stack?.[0]?.handle?.__source || 
+               route.stack?.[0]?.handle?.original?.__source || 
+               'unknown';
+    }
+
+    private parseRoutes(layer: any, basePath: string = ''): void {
+        // console.log('Parsing routes...');
+        if (layer.route) {
+            // This is a route definition
+            const route = layer.route;
+            const methods = Object.keys(route.methods);
+            
+            methods.forEach(method => {
+                this.routes.push({
+                    method: method.toUpperCase(),
+                    path: (basePath + route.path) || '/',
+                    sourcePath: this.getSourcePath(route)
+                });
+            });
+        } else if (layer.name === 'router') {
+            // This is a nested router
+            const prefix = layer.regexp?.source
+                ?.replace('\\/?(?=\\/|$)', '')
+                ?.replace(/\\\//g, '/')
+                ?.replace(/^\^/, '')
+                ?.replace(/\$/, '') || '';
+                
+            // Parse nested routes
+            layer.handle.stack.forEach((nestedLayer: any) => {
+                // console.log('Nested Layer:', nestedLayer);
+                this.parseRoutes(nestedLayer, prefix);
+            });
+        }
+    }
+
+    public displayRoutes(): void {
+        // Parse all routes
+        this.app._router.stack.forEach((layer:any) => this.parseRoutes(layer));
+
+        if (this.routes.length === 0) {
+            console.log('\nNo routes found. Make sure routes are properly mounted on the Express app.');
+            return;
+        }
+
+        // Sort routes by path and method
+        this.routes.sort((a, b) => {
+            const pathCompare = a.path.localeCompare(b.path);
+            if (pathCompare !== 0) return pathCompare;
+            return a.method.localeCompare(b.method);
+        });
+
+        const table = new Table({
+            head: ['Method', 'Path', 'Source'].map(h => white(h)),
+            style: {
+                head: [],
+                border: []
+            }
+        });
+
+        this.routes.forEach(route => {
+            table.push([
+                this.formatMethod(route.method),
+                route.path,
+                gray(route.sourcePath)
+            ]);
+        });
+
+        console.log('\nAPI Routes:');
+        console.log(table.toString());
+        console.log(`\nTotal routes: ${this.routes.length}\n`);
+    }
+}
+
+================================================
+File: \src\router.ts
+================================================
+// src/_core/helper/create-router-path.ts
+import * as express from 'express';
+
+// src/_core/helper/create-router-path.ts
+export function createRouter(filename: string) {
+    const router = express.Router();
+    
+    // Store source on the router itself
+    (router as any).__source = filename;
+    
+    // Wrap route methods to store source
+    ['get', 'post', 'put', 'delete', 'patch'].forEach(method => {
+        const originalMethod = (router as any)[method];
+        (router as any)[method] = function(path: string, ...handlers: any[]) {
+            // Store source on each handler and the route
+            handlers.forEach(handler => {
+                if (typeof handler === 'function') {
+                    handler.__source = filename;
+                    if (handler.original) {
+                        handler.original.__source = filename;
+                    }
+                }
+            });
+            const route = originalMethod.call(this, path, ...handlers);
+            route.__source = filename;
+            return route;
+        };
+    });
+    
+    return router;
+}
+
+================================================
+File: \src\types.ts
+================================================
+import { Request, Response, NextFunction } from 'express';
+
+export type RouteHandler = (req: Request, res: Response, next: NextFunction) => void;
+
+export interface RouteHandlerWithMetadata extends RouteHandler {
+    __source?: string;
+    __name?: string;
+    middleware?: RouteHandler[];
+}
+
+
+================================================
+File: \tsconfig.json
+================================================
+{
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "target": "ES6",
+    "module": "CommonJS",
+    "strict": true,
+    "esModuleInterop": true,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false
+  }
+}
+
+
