@@ -56,7 +56,7 @@ In your route module (e.g., `src/modules/contact/index.ts`):
 
 ```typescript
 // src/modules/contact/index.ts
-import { createHATEOASMiddleware, createRouter } from '@node_modules/express-route-tracker/dist';
+import { createHATEOASMiddleware, createRouter } from 'express-route-tracker';
 import {
   createContactHandler,
   deleteContactHandler,
