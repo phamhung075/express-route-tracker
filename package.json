@@ -19,8 +19,8 @@
         "clean": "rimraf dist",
         "build": "tsc",
         "bump": "pnpm version patch --no-git-tag-version",
-        "prepublishOnly": "pnpm run clean && pnpm run build",
-        "release": "pnpm run bump && pnpm publish"
+        "prepublishOnly": "pnpm run bump & pnpm run clean && pnpm run build",
+        "release": "pnpm publish"
     },
     "dependencies": {
         "cli-table3": "^0.6.5",
