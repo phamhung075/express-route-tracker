@@ -1,6 +1,6 @@
 {
     "name": "express-route-tracker",
-    "version": "2.0.63",
+    "version": "2.0.64",
     "main": "dist/index.js",
     "license": "MIT",
     "types": "dist/index.d.ts",
@@ -18,9 +18,9 @@
     "scripts": {
         "clean": "rimraf dist",
         "build": "tsc",
-        "bump": "npm version patch --no-git-tag-version",
-        "prepublishOnly": "npm run clean && npm run build",
-        "release": "npm run bump && npm publish"
+        "bump": "pnpm version patch --no-git-tag-version",
+        "prepublishOnly": "pnpm run clean && pnpm run build",
+        "release": "pnpm run bump && pnpm publish"
     },
     "dependencies": {
         "cli-table3": "^0.6.5",
