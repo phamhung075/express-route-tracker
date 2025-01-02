@@ -2,7 +2,7 @@
 import * as express from 'express';
 
 // src/_core/helper/create-router-path.ts
-export function createRouter(filename: string) {
+export function createRouter(filename: string): express.Router {
     const router = express.Router();
     
     // Store source on the router itself
