@@ -7,9 +7,11 @@
 
 ![Example Usage](https://scontent.fctt1-1.fna.fbcdn.net/v/t1.15752-9/467114773_1049798083500442_9220589951170052487_n.png?_nc_cat=109&ccb=1-7&_nc_sid=9f807c&_nc_ohc=LagamJ5YO6EQ7kNvgH1emSC&_nc_zt=23&_nc_ht=scontent.fctt1-1.fna&oh=03_Q7cD1gFU3TRmRpEfgInCnhodelyaslhhCB0O5245mzhQYKnuWg&oe=67918C78)
 
-## **Example Project**
-`https://github.com/phamhung075/AIanalist`
+## **Example Project Node.js express typescript**
+[https://github.com/phamhung075/AIanalist](https://github.com/phamhung075/AIanalist)
 
+## **Example Project Bun express typescript**
+[https://github.com/phamhung075/AIanalist](https://github.com/phamhung075/AIanalist_bun_version)
 ---
 
 ## Quick Start
