@@ -12,6 +12,7 @@
 
 ## **Example Project Bun express typescript**
 [https://github.com/phamhung075/AIanalist](https://github.com/phamhung075/AIanalist_bun_version)
+
 ---
 
 ## Quick Start
