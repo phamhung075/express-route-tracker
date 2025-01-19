@@ -9,7 +9,7 @@ export function createHATEOASMiddleware(router: Router, options: HATEOASOptions 
         
         // Get the source file from the router
         const sourceFile = (router as any).__source;
-        console.log('Router source:', sourceFile);
+        // console.log('Router source:', sourceFile);
         
         if (!sourceFile) {
             console.warn('No source file found on router');
@@ -143,10 +143,10 @@ function collectRoutesFromSameSource(router: Router, sourceFile: string) {
             const routePath = layer.route.path;
             const routeMethods = layer.route.methods;
 
-            console.log('Found route:', {
-                path: routePath,
-                methods: routeMethods
-            });
+            // console.log('Found route:', {
+            //     path: routePath,
+            //     methods: routeMethods
+            // });
 
             Object.keys(routeMethods).forEach(method => {
                 routes.push({
@@ -157,7 +157,7 @@ function collectRoutesFromSameSource(router: Router, sourceFile: string) {
         }
     });
 
-    console.log('Collected routes:', routes);
+    // console.log('Collected routes:', routes);
     return routes;
 }
 
