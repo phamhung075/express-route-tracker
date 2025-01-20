@@ -11,7 +11,7 @@
 [https://github.com/phamhung075/AIanalist](https://github.com/phamhung075/AIanalist)
 
 ## **Example Project Bun express typescript**
-[https://github.com/phamhung075/AIanalist](https://github.com/phamhung075/AIanalist_bun_version)
+[https://github.com/phamhung075/AIanalist](https://github.com/phamhung075/AIanalist-bun-express)
 
 ---
 
